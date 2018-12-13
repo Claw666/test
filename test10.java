@@ -2,11 +2,9 @@ package application;
 
 import java.util.Set;
 import javafx.beans.value.ChangeListener;
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.animation.TranslateTransition;
 import javafx.application.Application; 
 import javafx.event.EventHandler;
 import javafx.scene.input.MouseButton;
@@ -31,11 +29,13 @@ import java.util.HashSet;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import java.util.Random;
 
@@ -48,7 +48,7 @@ class ColCircle // will contain the x,y and rad values for the circles
 
          
 public class test10 extends Application { 
-	private int[] colorSol;
+   private int[] colorSol;
    private int width;
    private int height;
    private int[][] adjacency;
@@ -62,23 +62,21 @@ public class test10 extends Application {
    private int CN;
    private boolean finished = false;
    private ToggleButton hint;
+   private ToggleButton highlight;
    private  Color [] color;
    private int pressed;
    private ToggleButton[] togle;
    private int Mode;
    private int[] NodeOrder;
    private int currValue = 0;
-   private Group root = new Group();
    
    
    //Timer variables
    private static final Integer STARTTIME = 15;
    private Timeline timeline;
    private Label timerLabel = new Label();
-   
-// Make timeSeconds a Property
-private IntegerProperty timeSeconds =
-        new SimpleIntegerProperty(STARTTIME);
+   // Make timeSeconds a Property
+   private IntegerProperty timeSeconds = new SimpleIntegerProperty(STARTTIME);
 
    //constructor for the random generator
    public test10(int[][] matrix,int vertices,int Edges,int mode) {
@@ -89,6 +87,9 @@ private IntegerProperty timeSeconds =
    }
    
    public void start(Stage stage) { 
+
+	   //Creating a root group
+	   Group root = new Group();
 	      
 	   VBox menuBar = new VBox();
 	   BorderPane menuBarAlignment = new BorderPane();
@@ -121,48 +122,57 @@ private IntegerProperty timeSeconds =
 	   
 	   tg = new ToggleGroup();
 	   togle=new ToggleButton[color.length];
-		 //Creatubg toggle buttons for the collers based on the chromatic number
-		 for(int i=0; i<12; i++){
-			 
-			 togle[i]=new ToggleButton();
-			 if (i==0) togle[0].setSelected(true);
-			 
-			 //Give the togle userData
-			 togle[i].setUserData(color[i]);
-			 //add the togle to the group
-			 togle[i].setToggleGroup(tg);
-			 //togle.setStyle("-fx-base: "+name[i]);
-			 
-			 String colo2 = color[i].toString().substring(2);
-			 togle[i].setStyle("-fx-background-color: #"+colo2);
-			 
-
-			 togle[i].setMinSize(90,90);
-			 if(i<6) {
-					colorright.getChildren().add(togle[i]);
-				}
-				else {
-					colorleft.getChildren().add(togle[i]);
-				}
-		 }
-		 colorCont.getChildren().addAll(colorleft,colorright);
-		 
-		 
-		 
+	   //Creatubg toggle buttons for the collers based on the chromatic number
+	   for(int i=0; i<12; i++){
+		   
+		   togle[i]=new ToggleButton();
+		   if (i==0) togle[0].setSelected(true);
+		   
+		   //Give the togle userData
+		   togle[i].setUserData(color[i]);
+		   //add the togle to the group
+		   togle[i].setToggleGroup(tg);
+		   //togle.setStyle("-fx-base: "+name[i]);
+		   
+		   String colo2 = color[i].toString().substring(2);
+		   togle[i].setStyle("-fx-background-color: #"+colo2);
+		   
+		   togle[i].setMinSize(90,90);
+		   if(i<6) {
+			   colorright.getChildren().add(togle[i]);
+			   }
+		   else {
+			   colorleft.getChildren().add(togle[i]);
+			   }
+		   }
+	   colorCont.getChildren().addAll(colorleft,colorright);
 	   
-   	   //boolean matrix to check which edges have been used or not
+	   //boolean matrix to check which edges have been used or not
    	   boolean[][] edgesstate = new boolean[Nvertices][Nvertices];
-   	   //some weird magic
+   	   
+   	   //make the class where the starting coordinates will be stored in
    	   ColCircle vertices[] = null;
+   	   
+   	   //class where the dragable nodes will be in
    	   arr = null;
+   	   
+   	   //class where the numbers of the vertices for make 3 will be in
    	   Text = null;
    	   
+   	   //declare that vertices is  new array of the class ColCircle with length of the amount of vertices
    	   vertices = new ColCircle[Nvertices];
+   	   
+   	   //declare that arr is a new array of the class dragNode with length of the amount of vertices
    	   arr = new dragNode[Nvertices];
+   	   
+   	   //declare that Text is a new array of the class fixedText with length of the amount of vertices
    	   Text = new fixedText[Nvertices];
+   	   
+   	   //get the width and height of the stage
        width = (int) stage.getWidth();
        height = (int) stage.getHeight();
    	   
+       //calculate the angle that has to be between every vertices in the center
    	   double angle = 2*Math.PI/Nvertices;
    	   // giving x and y values to the circles
    	   for(int i=0; i<Nvertices;i++){
@@ -185,9 +195,6 @@ private IntegerProperty timeSeconds =
       	endY[i] = new SimpleDoubleProperty(vertices[i].y);
       }
       
-      //make an array to put the dragNodes in, these will be the vertices
-      //dragNode[] arr = new dragNode[Nvertices];
-      
       //make the dragNodes
       for(int i = 0; i<Nvertices;i++){
     	  arr[i] = new dragNode(Color.WHITE,startX[i],startY[i],20);
@@ -198,12 +205,12 @@ private IntegerProperty timeSeconds =
       }
       
       //mane an array to put the Boundes Lines in
-       lines = new fixedLine[edges];
-       
-       //place counter
-   	   int p = 0;
-   	   
-       //make all the lines
+      lines = new fixedLine[edges];
+     
+      //place counter
+      int p = 0;
+      
+      //make all the lines
       for(int i=0;i<Nvertices;i++){
       	for(int j =0; j<Nvertices;j++){
       		if(adjacency[i][j]==1 && edgesstate[i][j]==false){
@@ -227,11 +234,9 @@ private IntegerProperty timeSeconds =
       					if(Mode==1) {
       						Mode1 test = new Mode1(adjacency,numberofVertices,numberofEdges);
       						test.start(stage);
-      					}else if(Mode==2) {
+      					}
+      					else if(Mode==2) {
       						Mode2 test = new Mode2(adjacency,numberofVertices,numberofEdges);
-      						test.start(stage);
-      					} else if (Mode ==3) {
-      						Mode3 test = new Mode3(adjacency,numberofVertices,numberofEdges);
       						test.start(stage);
       					}
                   }
@@ -256,6 +261,23 @@ private IntegerProperty timeSeconds =
                 	  }
                   }
               });
+      
+      highlight = new ToggleButton("FOCUS");
+      highlight.setStyle("-fx-background-color: #D3D3D3");
+      highlight.setSelected(false);
+      highlight.setOnAction(
+              new EventHandler<ActionEvent>() {
+                  @Override
+                  public void handle(final ActionEvent e) {
+                	  if(highlight.isSelected()) {
+                		  highlight.setStyle("-fx-background-color: #90EE90");
+                	  }
+                	  else {
+                		  highlight.setStyle("-fx-background-color: #D3D3D3");
+                	  }
+                  }
+              });
+      
       TextField Input = new TextField();
       Input.setPromptText("amount of solving colors");
 	  
@@ -269,7 +291,6 @@ private IntegerProperty timeSeconds =
 				    	pressed = (int) Double.parseDouble(amount)-1;
 				    	backtracking();
 				        checkcolors();
-		        		//checkedges();
 			    	}
 			    }
 			});
@@ -359,7 +380,7 @@ private IntegerProperty timeSeconds =
       nextBtnCont.setStyle("-fx-background-color: #D3D3D3;");
       
       HBox hintCont = new HBox();
-      hintCont.getChildren().addAll(hint,colourDelete);
+      hintCont.getChildren().addAll(hint,colourDelete,highlight);
       hintCont.setPrefHeight(70);
       hintCont.setAlignment(Pos.CENTER_LEFT);
       hintCont.setSpacing(50);
@@ -403,19 +424,22 @@ private IntegerProperty timeSeconds =
 	   CN = Chron;
    }
    
+   //the class fixed line will make an edge be connected to the vertices when they get dragged
    class fixedLine extends Line {
 	      fixedLine(DoubleProperty startX, DoubleProperty startY, DoubleProperty endX, DoubleProperty endY) {
+	      //the input of the constructor contains the coordinates of the vertices this edge connects
 	      startXProperty().bind(startX);
 	      startYProperty().bind(startY);
 	      endXProperty().bind(endX);
 	      endYProperty().bind(endY);
 	      setStrokeWidth(2);
-	      setStroke(Color.GRAY.deriveColor(0, 1, 1, 0.5));
+	      setStroke(Color.GRAY);
 	      setStrokeLineCap(StrokeLineCap.ROUND);
 	      getStrokeDashArray().setAll(10.0, 5.0);
 	      setMouseTransparent(true);
 	    }
 	  }
+   //the class fixedText will be used for mode 3, the numbers will be fixed to the center of the vertices
    class fixedText extends Text {
 	      fixedText(DoubleProperty x, DoubleProperty y, String text) {
 	      xProperty().bind(x);
@@ -437,6 +461,8 @@ private IntegerProperty timeSeconds =
 	      setStrokeType(StrokeType.OUTSIDE);
 	      x.bind(centerXProperty());
 	      y.bind(centerYProperty());
+	      
+	      // goes into the void that makes it possible we can drag the nodes around
 	      enableDrag();
 	    }
 
@@ -463,19 +489,9 @@ private IntegerProperty timeSeconds =
 	        				setFill((Color)tg.getSelectedToggle().getUserData());
 			        		checkcolors();
 			        		if(hint.isSelected()) checkedges();
-			        		if (currValue == Nvertices-1) {
-			        			checkcolors();
-			        			if(finished) {
-			        				winPopup();
-			        			} else {
-			        				lostPopup();
-			        				checkedges();
-			        			}
-			        		}
 			        		currValue++;
-			        		
 	        			}else {
-	        				shakeEffect(root);
+	        				System.out.println("NOOOO");
 	        			}
 	        		}
 	        	}
@@ -507,13 +523,40 @@ private IntegerProperty timeSeconds =
 	          if (!mouseEvent.isPrimaryButtonDown()) {
 	            getScene().setCursor(Cursor.HAND);
 	          }
+	          if(highlight.isSelected()) {
+	          for(int p =0; p<edges;p++) {
+					double xe = lines[p].getEndX();
+					double xb = lines[p].getStartX();
+					
+					double ye = lines[p].getEndY();
+					double yb = lines[p].getStartY();
+					
+						if((xe==getCenterX() && ye == getCenterY())||(xb==getCenterX() && yb == getCenterY()))
+									lines[p].setStroke(Color.BLUE);
+				}
+	          }
 	        }
 	      });
-	      //action if mouse doesnt hover over a node
+	      
+	      //action if mouse doesn't hover over a node
 	      setOnMouseExited(new EventHandler<MouseEvent>() {
 	        @Override public void handle(MouseEvent mouseEvent) {
 	          if (!mouseEvent.isPrimaryButtonDown()) {
 	            getScene().setCursor(Cursor.DEFAULT);
+	          }
+	          for(int p =0; p<edges;p++) {
+					double xe = lines[p].getEndX();
+					double xb = lines[p].getStartX();					
+					double ye = lines[p].getEndY();
+					double yb = lines[p].getStartY();
+					
+						if((xe==getCenterX() && ye == getCenterY())||(xb==getCenterX() && yb == getCenterY())) {
+						lines[p].setStroke(Color.GRAY);
+						lines[p].setStrokeLineCap(StrokeLineCap.ROUND);
+					    lines[p].getStrokeDashArray().setAll(10.0, 5.0);
+						}
+						if(hint.isSelected())
+							checkedges();
 	          }
 	        }
 	      });
@@ -526,9 +569,6 @@ private IntegerProperty timeSeconds =
 		boolean check=true;
 		Set<String> set = new HashSet<String>(); 
 		for(int i = 0; i<Nvertices; i++) {
-			if(arr[i].getFill().equals(Color.WHITE)) {
-				check = false;
-			}
 			for(int j=0; j<Nvertices; j++){
 				if(adjacency[i][j]==1) {
 					if(arr[i].getFill().equals(arr[j].getFill())||arr[i].getFill().equals(Color.WHITE)) {
@@ -564,6 +604,8 @@ private IntegerProperty timeSeconds =
 								if((xe==arr[i].getCenterX() && ye == arr[i].getCenterY())||(xb==arr[i].getCenterX() && yb == arr[i].getCenterY()))
 									if((xe==arr[j].getCenterX() && ye == arr[j].getCenterY())||(xb==arr[j].getCenterX() && yb == arr[j].getCenterY())) {
 											lines[p].setStroke(Color.GRAY);
+											lines[p].setStrokeLineCap(StrokeLineCap.ROUND);
+										    lines[p].getStrokeDashArray().setAll(10.0, 5.0);
 									}
 							}else if(arr[i].getFill().equals(arr[j].getFill())){
 								if((xe==arr[i].getCenterX() && ye == arr[i].getCenterY())||(xb==arr[i].getCenterX() && yb == arr[i].getCenterY()))
@@ -613,30 +655,5 @@ private IntegerProperty timeSeconds =
 	        //alert.setOnHidden(evt -> homePage.start(stage));
 
 	        alert.show(); 
-	    }
-	    public static void shakeEffect(Group root) {
-	        int duration = 100;
-	        int count = 2;
-
-	        TranslateTransition transition1 = new TranslateTransition(Duration.millis(duration), root);
-	        transition1.setFromX(0);
-	        transition1.setToX(-5);
-	        transition1.setInterpolator(Interpolator.LINEAR);
-
-	        TranslateTransition transition2 = new TranslateTransition(Duration.millis(duration), root);
-	        transition2.setFromX(-5);
-	        transition2.setToX(5);
-	        transition2.setDelay(Duration.millis(duration));
-	        transition2.setInterpolator(Interpolator.LINEAR);
-	        transition2.setCycleCount(count);
-
-	        TranslateTransition transition3 = new TranslateTransition(Duration.millis(duration), root);
-	        transition3.setToX(0);
-	        transition3.setDelay(Duration.millis((count + 1) * duration));
-	        transition3.setInterpolator(Interpolator.LINEAR);
-
-	        transition1.play();
-	        transition2.play();
-	        transition3.play();
 	    }
 }
